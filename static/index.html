@@ -47,6 +47,8 @@
     <div class="card"><div class="label">Delta Horizontal (ΔH)</div><div id="deltaH" class="value">--</div></div>
     <div class="card"><div class="label">Vertical Servo Angle</div><div id="servoV" class="value">--</div></div>
     <div class="card"><div class="label">Horizontal Servo Angle</div><div id="servoH" class="value">--</div></div>
+    <div class="card"><div class="label">LED Status</div><div id="led" class="value">--</div></div>
+
   </div>
 
   <script>
@@ -67,6 +69,7 @@
     document.getElementById("deltaH").innerText = data.dhoriz;
     document.getElementById("servoV").innerText = data.servovert;
     document.getElementById("servoH").innerText = data.servohori;
+    document.getElementById("led").innerText = data.led === "ON" ? "ON" : "OFF";
 
   } catch (err) {
     console.error("Error fetching data:", err);
