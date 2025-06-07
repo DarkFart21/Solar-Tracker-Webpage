@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 import os
 import json
 import requests
@@ -8,18 +8,21 @@ from datetime import datetime
 app = Flask(__name__, static_folder='static')
 DATA_FILE = "data.json"
 CSV_FILE = "data_log.csv"
-BLYNK_TOKEN = os.environ.get("BLYNK_AUTH_TOKEN")
 
-# Map friendly names to Blynk virtual pins
-VIRTUAL_PINS = {
-    "lt": "V2",
-    "rt": "V3",
-    "ld": "V4",
-    "rd": "V5",
-    "dvert": "V6",
-    "dhoriz": "V7",
-    "servovert": "V8",
-    "servohori": "V9"
+# ThingSpeak config
+THINGSPEAK_CHANNEL_ID = os.environ.get("THINGSPEAK_CHANNEL_ID")
+THINGSPEAK_API_KEY = os.environ.get("THINGSPEAK_READ_API_KEY")  # Optional if public
+
+# Map local variable names to ThingSpeak field names
+FIELD_MAP = {
+    "lt": "field1",
+    "rt": "field2",
+    "ld": "field3",
+    "rd": "field4",
+    "dvert": "field5",
+    "dhoriz": "field6",
+    "servovert": "field7",
+    "servohori": "field8"
 }
 
 @app.route('/')
@@ -44,26 +47,34 @@ def append_to_csv(data):
 
 @app.route('/update', methods=['POST'])
 def update_data():
-    if not BLYNK_TOKEN:
-        return jsonify({"error": "Missing Blynk token"}), 500
+    if not THINGSPEAK_CHANNEL_ID:
+        return jsonify({"error": "Missing ThingSpeak channel ID"}), 500
 
-    data = {}
-    for key, pin in VIRTUAL_PINS.items():
-        try:
-            url = f"https://sgp1.blynk.cloud/external/api/get?token={BLYNK_TOKEN}&{pin}"
-            res = requests.get(url)
-            res.raise_for_status()
-            value = res.text
-            data[key] = int(value) if value.isdigit() else value
-        except Exception as e:
-            data[key] = None  # Or log error if needed
+    url = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json"
+    params = {"api_key": THINGSPEAK_API_KEY} if THINGSPEAK_API_KEY else {}
 
-    with open(DATA_FILE, 'w') as f:
-        json.dump(data, f)
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        feed = response.json()
 
-    append_to_csv(data)
+        data = {}
+        for key, field in FIELD_MAP.items():
+            raw_value = feed.get(field)
+            try:
+                data[key] = int(raw_value) if raw_value is not None and raw_value.isdigit() else raw_value
+            except:
+                data[key] = None
 
-    return jsonify({"status": "updated", "data": data}), 200
+        with open(DATA_FILE, 'w') as f:
+            json.dump(data, f)
+
+        append_to_csv(data)
+
+        return jsonify({"status": "updated", "data": data}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch data from ThingSpeak", "details": str(e)}), 500
 
 @app.route('/download', methods=['GET'])
 def download_csv():
@@ -74,4 +85,3 @@ def download_csv():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
