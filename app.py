@@ -43,12 +43,23 @@ def get_data():
 @app.route("/led")
 def get_led_status():
     try:
-        response = requests.get(THINGSPEAK_LED_URL)
+        response = requests.get(LED_API_URL)
+        response.raise_for_status()
         data = response.json()
-        led_value = int(data["feeds"][0]["field1"])
-        return jsonify({"led": "ON" if led_value == 1 else "OFF"})
+
+        # Get the most recent LED value from field1 (you can adjust if using another field)
+        last_entry = data["feeds"][-1]
+        led_value = last_entry["field1"]
+
+        # Convert to ON/OFF (assuming 1 = ON, 0 = OFF)
+        led_status = "ON" if led_value == "1" else "OFF"
+
+        return jsonify({"led": led_status})
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run()
 
 
 def append_to_csv(data):
