@@ -114,38 +114,47 @@
   </div>
 
   <script>
-    async function fetchData() {
-      try {
-        await fetch('/update', { method: 'POST' });
-       const dataResponse = await fetch('/data');
-          const data = await dataResponse.json();
+  async function fetchData() {
+    try {
+      // Optionally remove this if /update is not needed
+      await fetch('/update', { method: 'POST' });
 
-const ledResponse = await fetch('/led');
-const ledData = await ledResponse.json();
+      // Fetch LDR and Servo data
+      const dataResponse = await fetch('/data');
+      const data = await dataResponse.json();
 
-document.getElementById("lt").innerText = data.lt;
-document.getElementById("rt").innerText = data.rt;
-document.getElementById("ld").innerText = data.ld;
-document.getElementById("rd").innerText = data.rd;
-document.getElementById("deltaV").innerText = data.dvert;
-document.getElementById("deltaH").innerText = data.dhoriz;
-document.getElementById("servoV").innerText = data.servovert;
-document.getElementById("servoH").innerText = data.servohori;
-
-const ledContainer = document.getElementById("led");
-const ledOn = ledData.led === "ON";
-ledContainer.innerHTML = `
-  <span class="led-indicator ${ledOn ? "led-on" : "led-off"}"></span>
-  ${ledOn ? "ON" : "OFF"}
-`;
-
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      }
+      // Populate LDR and servo data
+      document.getElementById("lt").innerText = data.lt;
+      document.getElementById("rt").innerText = data.rt;
+      document.getElementById("ld").innerText = data.ld;
+      document.getElementById("rd").innerText = data.rd;
+      document.getElementById("deltaV").innerText = data.dvert;
+      document.getElementById("deltaH").innerText = data.dhoriz;
+      document.getElementById("servoV").innerText = data.servovert;
+      document.getElementById("servoH").innerText = data.servohori;
+    } catch (err) {
+      console.error("Error fetching LDR/servo data:", err);
     }
 
-    setInterval(fetchData, 3000);
-    fetchData();
-  </script>
+    try {
+      // Fetch LED status separately
+      const ledResponse = await fetch('/led');
+      const ledData = await ledResponse.json();
+
+      const ledContainer = document.getElementById("led");
+      const ledOn = ledData.led === "ON";
+      ledContainer.innerHTML = `
+        <span class="led-indicator ${ledOn ? "led-on" : "led-off"}"></span>
+        ${ledOn ? "ON" : "OFF"}
+      `;
+    } catch (err) {
+      console.error("Error fetching LED status:", err);
+    }
+  }
+
+  setInterval(fetchData, 3000);
+  fetchData();
+</script>
+
 </body>
 </html>
