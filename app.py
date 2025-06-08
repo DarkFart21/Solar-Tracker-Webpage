@@ -13,6 +13,10 @@ CSV_FILE = "data_log.csv"
 THINGSPEAK_CHANNEL_ID = os.environ.get("THINGSPEAK_CHANNEL_ID")
 THINGSPEAK_API_KEY = os.environ.get("THINGSPEAK_READ_API_KEY")  # Optional if public
 
+# 🆕 New channel for LED status
+THINGSPEAK_LED_URL = "https://api.thingspeak.com/channels/YOUR_LED_CHANNEL_ID/fields/1.json?results=1"
+
+
 # Map local variable names to ThingSpeak field names
 FIELD_MAP = {
     "lt": "field1",
@@ -35,6 +39,17 @@ def get_data():
         with open(DATA_FILE, 'r') as f:
             return jsonify(json.load(f))
     return jsonify({}), 404
+
+@app.route("/led")
+def get_led_status():
+    try:
+        response = requests.get(THINGSPEAK_LED_URL)
+        data = response.json()
+        led_value = int(data["feeds"][0]["field1"])
+        return jsonify({"led": "ON" if led_value == 1 else "OFF"})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 def append_to_csv(data):
     file_exists = os.path.isfile(CSV_FILE)
