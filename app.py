@@ -14,8 +14,8 @@ THINGSPEAK_CHANNEL_ID = os.environ.get("THINGSPEAK_CHANNEL_ID")
 THINGSPEAK_API_KEY = os.environ.get("THINGSPEAK_READ_API_KEY")  # Optional if public
 
 # 🆕 New channel for LED status
-THINGSPEAK_LED_URL = "LED_API_URL = "https://api.thingspeak.com/channels/2983728/feeds.json?results=1"
-"
+THINGSPEAK_LED_URL = "https://api.thingspeak.com/channels/2983728/feeds.json?results=1"
+
 
 
 # Map local variable names to ThingSpeak field names
