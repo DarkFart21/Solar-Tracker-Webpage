@@ -44,7 +44,7 @@ def get_data():
 @app.route("/led")
 def get_led_status():
     try:
-        response = requests.get(THINGSPEAK_LED_API_URL)
+        response = requests.get(THINGSPEAK_LED_URL)
         response.raise_for_status()
         data = response.json()
 
